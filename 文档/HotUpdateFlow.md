@@ -40,7 +40,7 @@ FsmInitializePackage
 
 ### 第 1 步：初始化资源包裹
 
-**文件**: [FsmInitializePackage.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmInitializePackage.cs)
+**文件**: [FsmInitializePackage.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmInitializePackage.cs)
 
 ```csharp
 // HostPlayMode 需要传入两套文件系统参数
@@ -58,7 +58,7 @@ package.InitializePackageAsync(options);
 
 ### 第 2 步：请求远端版本号
 
-**文件**: [FsmRequestPackageVersion.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmRequestPackageVersion.cs)
+**文件**: [FsmRequestPackageVersion.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmRequestPackageVersion.cs)
 
 ```csharp
 var operation = package.RequestPackageVersionAsync();
@@ -72,12 +72,12 @@ string version = operation.PackageVersion;  // 如 "1.0.3"
 3. 响应内容是一个纯文本字符串，直接作为版本号返回
 
 相关源码：
-- [RequestPackageVersionOperation.cs](../Runtime/ResourcePackage/Operations/RequestPackageVersionOperation.cs)
-- [RequestRemotePackageVersionOperation.cs](../Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/RequestRemotePackageVersionOperation.cs)
+- [RequestPackageVersionOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/RequestPackageVersionOperation.cs)
+- [RequestRemotePackageVersionOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/RequestRemotePackageVersionOperation.cs)
 
 ### 第 3 步：更新资源清单（关键步骤）
 
-**文件**: [FsmUpdatePackageManifest.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmUpdatePackageManifest.cs)
+**文件**: [FsmUpdatePackageManifest.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmUpdatePackageManifest.cs)
 
 ```csharp
 var operation = package.LoadPackageManifestAsync(
@@ -93,14 +93,14 @@ await operation;
 5. 调用 `FileSystemHost.SetActiveManifest(manifest)` **激活新清单** — 后续所有加载和下载都基于此清单
 
 相关源码：
-- [LoadPackageManifestOperation.cs](../Runtime/ResourcePackage/Operations/LoadPackageManifestOperation.cs)
-- [SFSLoadPackageManifestOperation.cs](../Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSLoadPackageManifestOperation.cs)
-- [LoadCachePackageManifestOperation.cs](../Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/LoadCachePackageManifestOperation.cs)
-- [PackageManifestHelper.cs](../Runtime/ResourcePackage/PackageManifestHelper.cs) — `VerifyManifestData()` 校验方法
+- [LoadPackageManifestOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/LoadPackageManifestOperation.cs)
+- [SFSLoadPackageManifestOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSLoadPackageManifestOperation.cs)
+- [LoadCachePackageManifestOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/LoadCachePackageManifestOperation.cs)
+- [PackageManifestHelper.cs](../Assets/YooAsset/Runtime/ResourcePackage/PackageManifestHelper.cs) — `VerifyManifestData()` 校验方法
 
 ### 第 4 步：创建下载器
 
-**文件**: [FsmCreateDownloader.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmCreateDownloader.cs)
+**文件**: [FsmCreateDownloader.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmCreateDownloader.cs)
 
 ```csharp
 var downloader = package.CreateResourceDownloader(new ResourceDownloaderOptions(
@@ -126,13 +126,13 @@ else
 4. 统计 `TotalDownloadCount`（总文件数）和 `TotalDownloadBytes`（总字节数）
 
 相关源码：
-- [FileSystemHost.cs](../Runtime/ResourcePackage/FileSystemHost.cs) — `CreateResourceDownloader()` 方法
-- [DownloaderOperation.cs](../Runtime/ResourcePackage/Operations/DownloaderOperation.cs) — `ResourceDownloaderOperation` 类
-- [BundleInfo.cs](../Runtime/ResourcePackage/BundleInfo.cs) — `IsDownloadRequired()` 方法
+- [FileSystemHost.cs](../Assets/YooAsset/Runtime/ResourcePackage/FileSystemHost.cs) — `CreateResourceDownloader()` 方法
+- [DownloaderOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/DownloaderOperation.cs) — `ResourceDownloaderOperation` 类
+- [BundleInfo.cs](../Assets/YooAsset/Runtime/ResourcePackage/BundleInfo.cs) — `IsDownloadRequired()` 方法
 
 ### 第 5 步：执行下载
 
-**文件**: [FsmDownloadPackageFiles.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmDownloadPackageFiles.cs)
+**文件**: [FsmDownloadPackageFiles.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmDownloadPackageFiles.cs)
 
 ```csharp
 downloader.DownloadCompleted += OnDownloadCompleted;
@@ -158,7 +158,7 @@ await downloader;
 
 ### 第一级：版本号判定（粗粒度）
 
-**代码位置**: [LoadPackageManifestOperation.cs:55](../Runtime/ResourcePackage/Operations/LoadPackageManifestOperation.cs#L55)
+**代码位置**: [LoadPackageManifestOperation.cs:55](../Assets/YooAsset/Runtime/ResourcePackage/Operations/LoadPackageManifestOperation.cs#L55)
 
 ```csharp
 if (_host.ActiveManifest != null
@@ -178,7 +178,7 @@ if (_host.ActiveManifest != null
 
 ### 第二级：Bundle 级判定（细粒度，文件级差异更新）
 
-**代码位置**: [SandboxFileSystem.cs](../Runtime/FileSystem/Services/SandboxFileSystem/SandboxFileSystem.cs) → `BundleCache.IsCached(bundle.BundleGuid)`
+**代码位置**: [SandboxFileSystem.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/SandboxFileSystem.cs) → `BundleCache.IsCached(bundle.BundleGuid)`
 
 ```csharp
 // SandboxFileSystem.IsDownloadRequired()
@@ -249,7 +249,7 @@ ResourceDownloaderOperation        ← 批量管理器：并发、重试、进�
 
 ### 4.1 批量管理器 `DownloaderOperation`
 
-**文件**: [DownloaderOperation.cs](../Runtime/ResourcePackage/Operations/DownloaderOperation.cs)
+**文件**: [DownloaderOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/DownloaderOperation.cs)
 
 关键设计：
 - **状态机**: `Check → Downloading → Finish → Done`
@@ -276,7 +276,7 @@ Progress = _lastDownloadCount / TotalDownloadCount   (无字节信息时按数�
 
 ### 4.2 单文件下载 `SFSDownloadBundleOperation`
 
-**文件**: [SFSDownloadBundleOperation.cs](../Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSDownloadBundleOperation.cs)
+**文件**: [SFSDownloadBundleOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSDownloadBundleOperation.cs)
 
 - **下载去重**: 通过 `DownloadScheduler.TryGetDownloadOperation(bundle)` 检查是否有相同 bundle 已在下载中，存在则复用（引用计数共享）
 - **重试策略**: `DownloadRetryController` 控制，失败后可延迟重试
@@ -284,7 +284,7 @@ Progress = _lastDownloadCount / TotalDownloadCount   (无字节信息时按数�
 
 ### 4.3 实际网络传输 `DownloadAndCacheFileOperation`
 
-**文件**: [DownloadAndCacheFileOperation.cs](../Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/DownloadAndCacheFileOperation.cs)
+**文件**: [DownloadAndCacheFileOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/DownloadAndCacheFileOperation.cs)
 
 这是最终执行 HTTP 下载的操作，状态机为 `CreateRequest → CheckRequest → CacheFile → Done`。
 
@@ -310,7 +310,7 @@ Progress = _lastDownloadCount / TotalDownloadCount   (无字节信息时按数�
 
 ### 4.4 下载调度器 `DownloadSchedulerOperation`
 
-**文件**: [DownloadSchedulerOperation.cs](../Runtime/DownloadSystem/Operations/DownloadSchedulerOperation.cs)
+**文件**: [DownloadSchedulerOperation.cs](../Assets/YooAsset/Runtime/DownloadSystem/Operations/DownloadSchedulerOperation.cs)
 
 每个 SandboxFileSystem 有**一个单例调度器**，全局管理所有活跃下载任务：
 - 维护 `bundleGuid → DownloadFileBaseOperation` 映射字典（去重）
@@ -320,7 +320,7 @@ Progress = _lastDownloadCount / TotalDownloadCount   (无字节信息时按数�
 
 ### 4.5 下载 URL 构建
 
-文件命名规则由 [YooAssetConfiguration.cs](../Runtime/Settings/YooAssetConfiguration.cs) 定义：
+文件命名规则由 [YooAssetConfiguration.cs](../Assets/YooAsset/Runtime/Settings/YooAssetConfiguration.cs) 定义：
 
 | 文件类型 | 命名格式 |
 |---------|---------|
@@ -367,7 +367,7 @@ ResourcePackage.LoadAssetAsync("location")
 
 ### 5.3 "边玩边下" 机制
 
-**文件**: [SFSLoadPackageBundleOperation.cs](../Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSLoadPackageBundleOperation.cs)
+**文件**: [SFSLoadPackageBundleOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSLoadPackageBundleOperation.cs)
 
 ```
 BundleCache.IsCached(bundle.BundleGuid)?
@@ -485,10 +485,10 @@ GameObject prefab = handle.GetAssetObject<GameObject>();
 
 | 接口 | 作用 | 文件 |
 |------|------|------|
-| `IRemoteService` | 提供远端文件下载 URL 列表 | [IRemoteService.cs](../Runtime/Interfaces/IRemoteService.cs) |
-| `IDownloadUrlPolicy` | URL 选择策略（主 URL / 备用 URL） | [IDownloadUrlPolicy.cs](../Runtime/Interfaces/IDownloadURLPolicy.cs) |
+| `IRemoteService` | 提供远端文件下载 URL 列表 | [IRemoteService.cs](../Assets/YooAsset/Runtime/Interfaces/IRemoteService.cs) |
+| `IDownloadUrlPolicy` | URL 选择策略（主 URL / 备用 URL） | [IDownloadUrlPolicy.cs](../Assets/YooAsset/Runtime/Interfaces/IDownloadURLPolicy.cs) |
 | `IDownloadRetryPolicy` | 下载重试策略 | 接口定义在 DownloadSystem 中 |
-| `IManifestDecryptor` | 清单解密接口 | [IManifestDecryptor.cs](../Runtime/Interfaces/IManifestDecryptor.cs) |
+| `IManifestDecryptor` | 清单解密接口 | [IManifestDecryptor.cs](../Assets/YooAsset/Runtime/Interfaces/IManifestDecryptor.cs) |
 
 ---
 
@@ -540,64 +540,64 @@ GameObject prefab = handle.GetAssetObject<GameObject>();
 
 | 文件 | 类/作用 |
 |------|---------|
-| [ResourcePackage.cs](../Runtime/ResourcePackage/ResourcePackage.cs) | 用户 API 入口，所有操作的起点 |
-| [FileSystemHost.cs](../Runtime/ResourcePackage/FileSystemHost.cs) | 文件系统中枢，管理多文件系统、创建下载器 |
-| [EPlayMode.cs](../Runtime/ResourcePackage/EPlayMode.cs) | 运行模式枚举 |
+| [ResourcePackage.cs](../Assets/YooAsset/Runtime/ResourcePackage/ResourcePackage.cs) | 用户 API 入口，所有操作的起点 |
+| [FileSystemHost.cs](../Assets/YooAsset/Runtime/ResourcePackage/FileSystemHost.cs) | 文件系统中枢，管理多文件系统、创建下载器 |
+| [EPlayMode.cs](../Assets/YooAsset/Runtime/ResourcePackage/EPlayMode.cs) | 运行模式枚举 |
 
 ### 更新流程核心操作
 
 | 文件 | 作用 |
 |------|------|
-| [InitializePackageOperation.cs](../Runtime/ResourcePackage/Operations/InitializePackageOperation.cs) | 初始化包裹 |
-| [RequestPackageVersionOperation.cs](../Runtime/ResourcePackage/Operations/RequestPackageVersionOperation.cs) | 请求版本号 |
-| [LoadPackageManifestOperation.cs](../Runtime/ResourcePackage/Operations/LoadPackageManifestOperation.cs) | 加载并激活清单 |
-| [DownloaderOperation.cs](../Runtime/ResourcePackage/Operations/DownloaderOperation.cs) | 批量下载管理器 |
+| [InitializePackageOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/InitializePackageOperation.cs) | 初始化包裹 |
+| [RequestPackageVersionOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/RequestPackageVersionOperation.cs) | 请求版本号 |
+| [LoadPackageManifestOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/LoadPackageManifestOperation.cs) | 加载并激活清单 |
+| [DownloaderOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/DownloaderOperation.cs) | 批量下载管理器 |
 
 ### 文件系统实现
 
 | 文件 | 作用 |
 |------|------|
-| [SandboxFileSystem.cs](../Runtime/FileSystem/Services/SandboxFileSystem/SandboxFileSystem.cs) | 沙盒文件系统（HostPlayMode 核心） |
-| [BuiltinFileSystem.cs](../Runtime/FileSystem/Services/BuiltinFileSystem/BuiltinFileSystem.cs) | 内置文件系统 |
-| [IFileSystem.cs](../Runtime/FileSystem/Interfaces/IFileSystem.cs) | 文件系统统一接口 |
+| [SandboxFileSystem.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/SandboxFileSystem.cs) | 沙盒文件系统（HostPlayMode 核心） |
+| [BuiltinFileSystem.cs](../Assets/YooAsset/Runtime/FileSystem/Services/BuiltinFileSystem/BuiltinFileSystem.cs) | 内置文件系统 |
+| [IFileSystem.cs](../Assets/YooAsset/Runtime/FileSystem/Interfaces/IFileSystem.cs) | 文件系统统一接口 |
 
 ### 下载和缓存
 
 | 文件 | 作用 |
 |------|------|
-| [DownloadAndCacheFileOperation.cs](../Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/DownloadAndCacheFileOperation.cs) | HTTP 下载 + 缓存写入 |
-| [SFSDownloadBundleOperation.cs](../Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSDownloadBundleOperation.cs) | 沙盒单文件下载任务 |
-| [DownloadSchedulerOperation.cs](../Runtime/DownloadSystem/Operations/DownloadSchedulerOperation.cs) | 全局下载调度器 |
-| [SandboxBundleCache.cs](../Runtime/BundleCache/Services/SandboxBundleCache/SandboxBundleCache.cs) | 沙盒 Bundle 缓存 |
+| [DownloadAndCacheFileOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/DownloadAndCacheFileOperation.cs) | HTTP 下载 + 缓存写入 |
+| [SFSDownloadBundleOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSDownloadBundleOperation.cs) | 沙盒单文件下载任务 |
+| [DownloadSchedulerOperation.cs](../Assets/YooAsset/Runtime/DownloadSystem/Operations/DownloadSchedulerOperation.cs) | 全局下载调度器 |
+| [SandboxBundleCache.cs](../Assets/YooAsset/Runtime/BundleCache/Services/SandboxBundleCache/SandboxBundleCache.cs) | 沙盒 Bundle 缓存 |
 
 ### 资源加载
 
 | 文件 | 作用 |
 |------|------|
-| [ResourceManager.cs](../Runtime/ResourceManager/ResourceManager.cs) | 资源加载调度中枢 |
-| [ProviderBase.cs](../Runtime/ResourceManager/Providers/ProviderBase.cs) | Provider 基类，桥接 Bundle 和资源 |
-| [LoadBundleOperation.cs](../Runtime/ResourceManager/Operations/Internal/LoadBundleOperation.cs) | Bundle 加载操作 |
-| [SFSLoadPackageBundleOperation.cs](../Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSLoadPackageBundleOperation.cs) | 沙盒 Bundle 加载（含边玩边下） |
+| [ResourceManager.cs](../Assets/YooAsset/Runtime/ResourceManager/ResourceManager.cs) | 资源加载调度中枢 |
+| [ProviderBase.cs](../Assets/YooAsset/Runtime/ResourceManager/Providers/ProviderBase.cs) | Provider 基类，桥接 Bundle 和资源 |
+| [LoadBundleOperation.cs](../Assets/YooAsset/Runtime/ResourceManager/Operations/Internal/LoadBundleOperation.cs) | Bundle 加载操作 |
+| [SFSLoadPackageBundleOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSLoadPackageBundleOperation.cs) | 沙盒 Bundle 加载（含边玩边下） |
 
 ### 清单和数据结构
 
 | 文件 | 作用 |
 |------|------|
-| [PackageManifest.cs](../Runtime/ResourcePackage/PackageManifest.cs) | 资源清单 |
-| [PackageBundle.cs](../Runtime/ResourcePackage/PackageBundle.cs) | 资源包描述 |
-| [PackageAsset.cs](../Runtime/ResourcePackage/PackageAsset.cs) | 资源描述 |
-| [BundleInfo.cs](../Runtime/ResourcePackage/BundleInfo.cs) | Bundle 运行时包装，含 `IsDownloadRequired()` |
-| [AssetInfo.cs](../Runtime/ResourcePackage/AssetInfo.cs) | 资源信息，对用户的公开类型 |
+| [PackageManifest.cs](../Assets/YooAsset/Runtime/ResourcePackage/PackageManifest.cs) | 资源清单 |
+| [PackageBundle.cs](../Assets/YooAsset/Runtime/ResourcePackage/PackageBundle.cs) | 资源包描述 |
+| [PackageAsset.cs](../Assets/YooAsset/Runtime/ResourcePackage/PackageAsset.cs) | 资源描述 |
+| [BundleInfo.cs](../Assets/YooAsset/Runtime/ResourcePackage/BundleInfo.cs) | Bundle 运行时包装，含 `IsDownloadRequired()` |
+| [AssetInfo.cs](../Assets/YooAsset/Runtime/ResourcePackage/AssetInfo.cs) | 资源信息，对用户的公开类型 |
 
 ### 示例代码
 
 | 文件 | 作用 |
 |------|------|
-| [Boot.cs](../Samples~/Space%20Shooter/GameScript/Runtime/Boot.cs) | 示例入口 |
-| [PatchManager.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/PatchManager.cs) | 状态机编排器 |
-| [FsmInitializePackage.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmInitializePackage.cs) | 步骤1：初始化 |
-| [FsmRequestPackageVersion.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmRequestPackageVersion.cs) | 步骤2：获取版本号 |
-| [FsmUpdatePackageManifest.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmUpdatePackageManifest.cs) | 步骤3：更新清单 |
-| [FsmCreateDownloader.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmCreateDownloader.cs) | 步骤4：创建下载器 |
-| [FsmDownloadPackageFiles.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmDownloadPackageFiles.cs) | 步骤5：执行下载 |
-| [PatchWindow.cs](../Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/PatchWindow.cs) | 更新 UI 和事件处理 |
+| [Boot.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/Boot.cs) | 示例入口 |
+| [PatchManager.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/PatchManager.cs) | 状态机编排器 |
+| [FsmInitializePackage.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmInitializePackage.cs) | 步骤1：初始化 |
+| [FsmRequestPackageVersion.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmRequestPackageVersion.cs) | 步骤2：获取版本号 |
+| [FsmUpdatePackageManifest.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmUpdatePackageManifest.cs) | 步骤3：更新清单 |
+| [FsmCreateDownloader.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmCreateDownloader.cs) | 步骤4：创建下载器 |
+| [FsmDownloadPackageFiles.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/FsmNode/FsmDownloadPackageFiles.cs) | 步骤5：执行下载 |
+| [PatchWindow.cs](../Assets/YooAsset/Samples~/Space%20Shooter/GameScript/Runtime/PatchLogic/PatchWindow.cs) | 更新 UI 和事件处理 |

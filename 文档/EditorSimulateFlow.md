@@ -53,7 +53,7 @@ var packageRoot = buildResult.PackageRootDirectory;
 
 ### 2.2 构建管道（4 个任务）
 
-**文件**: [EditorSimulateBuildPipeline.cs](../Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/EditorSimulateBuildPipeline.cs)
+**文件**: [EditorSimulateBuildPipeline.cs](../Assets/YooAsset/Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/EditorSimulateBuildPipeline.cs)
 
 ```
 TaskPrepare_ESBP → TaskGetBuildMap_ESBP → TaskUpdateBundleInfo_ESBP → TaskCreateManifest_ESBP
@@ -61,13 +61,13 @@ TaskPrepare_ESBP → TaskGetBuildMap_ESBP → TaskUpdateBundleInfo_ESBP → Task
 
 #### 任务 1：参数验证
 
-**文件**: [TaskPrepare_ESBP.cs](../Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskPrepare_ESBP.cs)
+**文件**: [TaskPrepare_ESBP.cs](../Assets/YooAsset/Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskPrepare_ESBP.cs)
 
 检查 `EditorSimulateBuildParameters.BuildBundleType` 必须是 `VirtualAssetBundle`、`VirtualRawBundle` 或 `VirtualArchiveBundle` 之一。
 
 #### 任务 2：生成构建映射
 
-**文件**: [TaskGetBuildMap_ESBP.cs](../Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskGetBuildMap_ESBP.cs)
+**文件**: [TaskGetBuildMap_ESBP.cs](../Assets/YooAsset/Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskGetBuildMap_ESBP.cs)
 
 - 调用 `TaskGetBuildMap.CreateBuildMap(simulateBuild: true, ...)`
 - 以 `simulateBuild = true` 模式启动收集器（`BundleCollector`），收集器以不同逻辑处理三种虚拟 Bundle：
@@ -78,7 +78,7 @@ TaskPrepare_ESBP → TaskGetBuildMap_ESBP → TaskUpdateBundleInfo_ESBP → Task
 
 #### 任务 3：更新 Bundle 信息
 
-**文件**: [TaskUpdateBundleInfo_ESBP.cs](../Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskUpdateBundleInfo_ESBP.cs)
+**文件**: [TaskUpdateBundleInfo_ESBP.cs](../Assets/YooAsset/Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskUpdateBundleInfo_ESBP.cs)
 
 核心方法：
 
@@ -93,7 +93,7 @@ TaskPrepare_ESBP → TaskGetBuildMap_ESBP → TaskUpdateBundleInfo_ESBP → Task
 
 #### 任务 4：生成清单
 
-**文件**: [TaskCreateManifest_ESBP.cs](../Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskCreateManifest_ESBP.cs)
+**文件**: [TaskCreateManifest_ESBP.cs](../Assets/YooAsset/Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskCreateManifest_ESBP.cs)
 
 - 调用 `TaskCreateManifest.CreateManifestFile(processBundleDepends: false, processBundleTags: true, ...)`
 - 生成 `PackageManifest` 对象并序列化为 `.bytes` 文件
@@ -140,7 +140,7 @@ var operation = package.InitializePackageAsync(createParameters);
 
 ### 3.2 初始化操作内部流程
 
-**文件**: [InitializePackageOperation.cs](../Runtime/ResourcePackage/Operations/InitializePackageOperation.cs)
+**文件**: [InitializePackageOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/InitializePackageOperation.cs)
 
 ```
 SetPlayMode:   识别 options 为 EditorSimulateModeOptions
@@ -158,7 +158,7 @@ InitFileSystem: FileSystemHost.InitializeAsync(editorFileSystemParameters)
 
 ### 3.3 EditorFileSystem.OnCreate()
 
-**文件**: [EditorFileSystem.cs](../Runtime/FileSystem/Services/EditorFileSystem/EditorFileSystem.cs)
+**文件**: [EditorFileSystem.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/EditorFileSystem.cs)
 
 ```csharp
 public void OnCreate(string packageName, string packageRoot)
@@ -180,7 +180,7 @@ public void OnCreate(string packageName, string packageRoot)
 
 ### 3.4 EFSInitializeOperation
 
-**文件**: [EFSInitializeOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSInitializeOperation.cs)
+**文件**: [EFSInitializeOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSInitializeOperation.cs)
 
 ```
 CheckPlatform:      确保在 UNITY_EDITOR 下运行
@@ -210,7 +210,7 @@ AssetInfo.AssetPath = "Assets/Game/Prefabs/Hero.prefab"
 
 ### 4.2 EditorFileSystemHelper.GetEditorFilePath()
 
-**文件**: [EditorFileSystemHelper.cs](../Runtime/FileSystem/Services/EditorFileSystem/EditorFileSystemHelper.cs)
+**文件**: [EditorFileSystemHelper.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/EditorFileSystemHelper.cs)
 
 ```csharp
 public static string GetEditorFilePath(PackageBundle bundle)
@@ -264,7 +264,7 @@ package.LoadAssetAsync<GameObject>("HeroPrefab")
 
 ### 5.2 EFSLoadPackageBundleOperation：Bundle 加载过程
 
-**文件**: [EFSLoadPackageBundleOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSLoadPackageBundleOperation.cs)
+**文件**: [EFSLoadPackageBundleOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSLoadPackageBundleOperation.cs)
 
 ```
 状态机: Prepare → DownloadFile / LoadBundle → CheckResult → Done
@@ -291,7 +291,7 @@ LoadBundle:
 
 ### 5.3 异步模拟延迟机制
 
-**文件**: [EBCLoadBundleBaseOperation.cs](../Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCLoadBundleBaseOperation.cs)
+**文件**: [EBCLoadBundleBaseOperation.cs](../Assets/YooAsset/Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCLoadBundleBaseOperation.cs)
 
 ```csharp
 // 构造函数中
@@ -323,7 +323,7 @@ else  // 同步等待模式
 
 ### 6.1 VirtualAssetBundleHandle（最常用）
 
-**文件**: [VirtualAssetBundleHandle.cs](../Runtime/BundleHandle/Services/VirtualAssetBundleHandle/VirtualAssetBundleHandle.cs)
+**文件**: [VirtualAssetBundleHandle.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualAssetBundleHandle/VirtualAssetBundleHandle.cs)
 
 对应 `EBundleType.VirtualAssetBundle (12)`，模拟真实 AssetBundle。
 
@@ -366,7 +366,7 @@ UnloadBundle:
 
 ### 6.2 VirtualRawBundleHandle
 
-**文件**: [VirtualRawBundleHandle.cs](../Runtime/BundleHandle/Services/VirtualRawBundleHandle/VirtualRawBundleHandle.cs)
+**文件**: [VirtualRawBundleHandle.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualRawBundleHandle/VirtualRawBundleHandle.cs)
 
 对应 `EBundleType.VirtualRawBundle (13)`，模拟原生文件（如 Lua 脚本、JSON 配置等）。
 
@@ -391,7 +391,7 @@ UnloadBundle:
 
 ### 6.3 VirtualArchiveBundleHandle
 
-**文件**: [VirtualArchiveBundleHandle.cs](../Runtime/BundleHandle/Services/VirtualArchiveBundleHandle/VirtualArchiveBundleHandle.cs)
+**文件**: [VirtualArchiveBundleHandle.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualArchiveBundleHandle/VirtualArchiveBundleHandle.cs)
 
 对应 `EBundleType.VirtualArchiveBundle (14)`，模拟归档文件包（将多个文件打包为一个归档）。
 
@@ -431,7 +431,7 @@ UnloadBundle:
 
 ### 7.1 EditorBundleCache
 
-**文件**: [EditorBundleCache.cs](../Runtime/BundleCache/Services/EditorBundleCache/EditorBundleCache.cs)
+**文件**: [EditorBundleCache.cs](../Assets/YooAsset/Runtime/BundleCache/Services/EditorBundleCache/EditorBundleCache.cs)
 
 ```
 特性:
@@ -624,78 +624,78 @@ EFSDownloadBundleOperation
 
 | 文件 | 作用 |
 |------|------|
-| [EditorSimulateBuildPipeline.cs](../Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/EditorSimulateBuildPipeline.cs) | 模拟构建管线 |
-| [EditorSimulateBuildParameters.cs](../Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/EditorSimulateBuildParameters.cs) | 构建参数（限制为虚拟类型） |
-| [TaskPrepare_ESBP.cs](../Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskPrepare_ESBP.cs) | 参数验证 |
-| [TaskGetBuildMap_ESBP.cs](../Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskGetBuildMap_ESBP.cs) | 生成资源映射 |
-| [TaskUpdateBundleInfo_ESBP.cs](../Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskUpdateBundleInfo_ESBP.cs) | 更新 Bundle 信息 |
-| [TaskCreateManifest_ESBP.cs](../Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskCreateManifest_ESBP.cs) | 生成清单 |
-| [BundleSimulateBuilder.cs](../Editor/BundleBuilder/BundleSimulateBuilder.cs) | 模拟构建入口 |
+| [EditorSimulateBuildPipeline.cs](../Assets/YooAsset/Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/EditorSimulateBuildPipeline.cs) | 模拟构建管线 |
+| [EditorSimulateBuildParameters.cs](../Assets/YooAsset/Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/EditorSimulateBuildParameters.cs) | 构建参数（限制为虚拟类型） |
+| [TaskPrepare_ESBP.cs](../Assets/YooAsset/Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskPrepare_ESBP.cs) | 参数验证 |
+| [TaskGetBuildMap_ESBP.cs](../Assets/YooAsset/Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskGetBuildMap_ESBP.cs) | 生成资源映射 |
+| [TaskUpdateBundleInfo_ESBP.cs](../Assets/YooAsset/Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskUpdateBundleInfo_ESBP.cs) | 更新 Bundle 信息 |
+| [TaskCreateManifest_ESBP.cs](../Assets/YooAsset/Editor/BundleBuilder/BuildPipeline/EditorSimulateBuildPipeline/BuildTasks/TaskCreateManifest_ESBP.cs) | 生成清单 |
+| [BundleSimulateBuilder.cs](../Assets/YooAsset/Editor/BundleBuilder/BundleSimulateBuilder.cs) | 模拟构建入口 |
 
 ### 运行时调用入口
 
 | 文件 | 作用 |
 |------|------|
-| [EditorSimulateBuildInvoker.cs](../Runtime/PackageBuilder/EditorSimulateBuildInvoker.cs) | 反射调用 Editor 构建 |
-| [InitializePackageOptions.cs](../Runtime/ResourcePackage/Operations/InitializePackageOptions.cs) | `EditorSimulateModeOptions` 定义 |
-| [InitializePackageOperation.cs](../Runtime/ResourcePackage/Operations/InitializePackageOperation.cs) | 初始化操作 |
-| [FileSystemParameters.cs](../Runtime/FileSystem/FileSystemParameters.cs) | `CreateDefaultEditorFileSystemParameters()` |
+| [EditorSimulateBuildInvoker.cs](../Assets/YooAsset/Runtime/PackageBuilder/EditorSimulateBuildInvoker.cs) | 反射调用 Editor 构建 |
+| [InitializePackageOptions.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/InitializePackageOptions.cs) | `EditorSimulateModeOptions` 定义 |
+| [InitializePackageOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/InitializePackageOperation.cs) | 初始化操作 |
+| [FileSystemParameters.cs](../Assets/YooAsset/Runtime/FileSystem/FileSystemParameters.cs) | `CreateDefaultEditorFileSystemParameters()` |
 
 ### EditorFileSystem
 
 | 文件 | 作用 |
 |------|------|
-| [EditorFileSystem.cs](../Runtime/FileSystem/Services/EditorFileSystem/EditorFileSystem.cs) | 编辑器文件系统 |
-| [EditorFileSystemHelper.cs](../Runtime/FileSystem/Services/EditorFileSystem/EditorFileSystemHelper.cs) | `GetEditorFilePath()` 核心方法 |
-| [EFSInitializeOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSInitializeOperation.cs) | 初始化操作 |
-| [EFSLoadPackageBundleOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSLoadPackageBundleOperation.cs) | Bundle 加载操作 |
-| [EFSDownloadBundleOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSDownloadBundleOperation.cs) | 模拟下载操作 |
-| [EFSLoadPackageManifestOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSLoadPackageManifestOperation.cs) | 清单加载操作 |
-| [EFSRequestPackageVersionOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSRequestPackageVersionOperation.cs) | 版本请求操作 |
-| [EFSEnsurePackageBundleOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSEnsurePackageBundleOperation.cs) | Bundle 确保操作 |
-| [EFSClearCacheOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSClearCacheOperation.cs) | 缓存清理操作 |
-| [SimulateAndCacheFileOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/internal/SimulateAndCacheFileOperation.cs) | 模拟下载并缓存 |
-| [LoadEditorPackageManifestOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/internal/LoadEditorPackageManifestOperation.cs) | 加载清单二进制 |
-| [LoadEditorPackageHashOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/internal/LoadEditorPackageHashOperation.cs) | 加载清单哈希 |
-| [LoadEditorPackageVersionOperation.cs](../Runtime/FileSystem/Services/EditorFileSystem/Operations/internal/LoadEditorPackageVersionOperation.cs) | 加载清单版本 |
+| [EditorFileSystem.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/EditorFileSystem.cs) | 编辑器文件系统 |
+| [EditorFileSystemHelper.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/EditorFileSystemHelper.cs) | `GetEditorFilePath()` 核心方法 |
+| [EFSInitializeOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSInitializeOperation.cs) | 初始化操作 |
+| [EFSLoadPackageBundleOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSLoadPackageBundleOperation.cs) | Bundle 加载操作 |
+| [EFSDownloadBundleOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSDownloadBundleOperation.cs) | 模拟下载操作 |
+| [EFSLoadPackageManifestOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSLoadPackageManifestOperation.cs) | 清单加载操作 |
+| [EFSRequestPackageVersionOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSRequestPackageVersionOperation.cs) | 版本请求操作 |
+| [EFSEnsurePackageBundleOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSEnsurePackageBundleOperation.cs) | Bundle 确保操作 |
+| [EFSClearCacheOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/EFSClearCacheOperation.cs) | 缓存清理操作 |
+| [SimulateAndCacheFileOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/internal/SimulateAndCacheFileOperation.cs) | 模拟下载并缓存 |
+| [LoadEditorPackageManifestOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/internal/LoadEditorPackageManifestOperation.cs) | 加载清单二进制 |
+| [LoadEditorPackageHashOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/internal/LoadEditorPackageHashOperation.cs) | 加载清单哈希 |
+| [LoadEditorPackageVersionOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/EditorFileSystem/Operations/internal/LoadEditorPackageVersionOperation.cs) | 加载清单版本 |
 
 ### EditorBundleCache
 
 | 文件 | 作用 |
 |------|------|
-| [EditorBundleCache.cs](../Runtime/BundleCache/Services/EditorBundleCache/EditorBundleCache.cs) | 编辑器缓存系统 |
-| [EBCLoadBundleBaseOperation.cs](../Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCLoadBundleBaseOperation.cs) | 异步模拟延迟基类 |
-| [EBCLoadVirtualAssetBundleOperation.cs](../Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCLoadVirtualAssetBundleOperation.cs) | 创建 VirtualAssetBundleHandle |
-| [EBCLoadVirtualRawBundleOperation.cs](../Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCLoadVirtualRawBundleOperation.cs) | 创建 VirtualRawBundleHandle |
-| [EBCLoadVirtualArchiveBundleOperation.cs](../Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCLoadVirtualArchiveBundleOperation.cs) | 创建 VirtualArchiveBundleHandle |
-| [EBCWriteCacheOperation.cs](../Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCWriteCacheOperation.cs) | 内存缓存写入 |
-| [EBCClearCacheOperation.cs](../Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCClearCacheOperation.cs) | 缓存清理 |
+| [EditorBundleCache.cs](../Assets/YooAsset/Runtime/BundleCache/Services/EditorBundleCache/EditorBundleCache.cs) | 编辑器缓存系统 |
+| [EBCLoadBundleBaseOperation.cs](../Assets/YooAsset/Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCLoadBundleBaseOperation.cs) | 异步模拟延迟基类 |
+| [EBCLoadVirtualAssetBundleOperation.cs](../Assets/YooAsset/Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCLoadVirtualAssetBundleOperation.cs) | 创建 VirtualAssetBundleHandle |
+| [EBCLoadVirtualRawBundleOperation.cs](../Assets/YooAsset/Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCLoadVirtualRawBundleOperation.cs) | 创建 VirtualRawBundleHandle |
+| [EBCLoadVirtualArchiveBundleOperation.cs](../Assets/YooAsset/Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCLoadVirtualArchiveBundleOperation.cs) | 创建 VirtualArchiveBundleHandle |
+| [EBCWriteCacheOperation.cs](../Assets/YooAsset/Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCWriteCacheOperation.cs) | 内存缓存写入 |
+| [EBCClearCacheOperation.cs](../Assets/YooAsset/Runtime/BundleCache/Services/EditorBundleCache/Operations/EBCClearCacheOperation.cs) | 缓存清理 |
 
 ### Virtual BundleHandle
 
 | 文件 | 作用 |
 |------|------|
-| [VirtualAssetBundleHandle.cs](../Runtime/BundleHandle/Services/VirtualAssetBundleHandle/VirtualAssetBundleHandle.cs) | VirtualAssetBundle Handle |
-| [VABHLoadAssetOperation.cs](../Runtime/BundleHandle/Services/VirtualAssetBundleHandle/Operations/VABHLoadAssetOperation.cs) | AssetDatabase.LoadAssetAtPath |
-| [VABHLoadAllAssetsOperation.cs](../Runtime/BundleHandle/Services/VirtualAssetBundleHandle/Operations/VABHLoadAllAssetsOperation.cs) | AssetDatabase.LoadMainAssetAtPath |
-| [VABHLoadSubAssetsOperation.cs](../Runtime/BundleHandle/Services/VirtualAssetBundleHandle/Operations/VABHLoadSubAssetsOperation.cs) | AssetDatabase.LoadAllAssetRepresentationsAtPath |
-| [VABHLoadSceneOperation.cs](../Runtime/BundleHandle/Services/VirtualAssetBundleHandle/Operations/VABHLoadSceneOperation.cs) | EditorSceneManager.LoadSceneInPlayMode |
-| [VirtualRawBundleHandle.cs](../Runtime/BundleHandle/Services/VirtualRawBundleHandle/VirtualRawBundleHandle.cs) | VirtualRawBundle Handle |
-| [VirtualArchiveBundleHandle.cs](../Runtime/BundleHandle/Services/VirtualArchiveBundleHandle/VirtualArchiveBundleHandle.cs) | VirtualArchiveBundle Handle |
-| [VirtualArchiveBundle.cs](../Runtime/BundleHandle/Services/VirtualArchiveBundleHandle/VirtualArchiveBundle.cs) | 虚拟归档数据容器 |
-| [VARBHLoadAssetOperation.cs](../Runtime/BundleHandle/Services/VirtualArchiveBundleHandle/Operations/VARBHLoadAssetOperation.cs) | 从归档创建 RawFileObject |
+| [VirtualAssetBundleHandle.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualAssetBundleHandle/VirtualAssetBundleHandle.cs) | VirtualAssetBundle Handle |
+| [VABHLoadAssetOperation.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualAssetBundleHandle/Operations/VABHLoadAssetOperation.cs) | AssetDatabase.LoadAssetAtPath |
+| [VABHLoadAllAssetsOperation.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualAssetBundleHandle/Operations/VABHLoadAllAssetsOperation.cs) | AssetDatabase.LoadMainAssetAtPath |
+| [VABHLoadSubAssetsOperation.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualAssetBundleHandle/Operations/VABHLoadSubAssetsOperation.cs) | AssetDatabase.LoadAllAssetRepresentationsAtPath |
+| [VABHLoadSceneOperation.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualAssetBundleHandle/Operations/VABHLoadSceneOperation.cs) | EditorSceneManager.LoadSceneInPlayMode |
+| [VirtualRawBundleHandle.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualRawBundleHandle/VirtualRawBundleHandle.cs) | VirtualRawBundle Handle |
+| [VirtualArchiveBundleHandle.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualArchiveBundleHandle/VirtualArchiveBundleHandle.cs) | VirtualArchiveBundle Handle |
+| [VirtualArchiveBundle.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualArchiveBundleHandle/VirtualArchiveBundle.cs) | 虚拟归档数据容器 |
+| [VARBHLoadAssetOperation.cs](../Assets/YooAsset/Runtime/BundleHandle/Services/VirtualArchiveBundleHandle/Operations/VARBHLoadAssetOperation.cs) | 从归档创建 RawFileObject |
 
 ### 公共接口和数据结构
 
 | 文件 | 作用 |
 |------|------|
-| [EPlayMode.cs](../Runtime/ResourcePackage/EPlayMode.cs) | PlayMode 枚举 |
-| [EBundleType.cs](../Runtime/BundleHandle/EBundleType.cs) | BundleType 枚举（含 12/13/14 虚拟类型） |
-| [IBundleHandle.cs](../Runtime/BundleHandle/Interfaces/IBundleHandle.cs) | BundleHandle 统一接口 |
-| [IFileSystem.cs](../Runtime/FileSystem/Interfaces/IFileSystem.cs) | 文件系统统一接口 |
-| [IBundleCache.cs](../Runtime/BundleCache/Interfaces/IBundleCache.cs) | 缓存系统统一接口 |
-| [PackageManifest.cs](../Runtime/ResourcePackage/PackageManifest.cs) | 资源清单 |
-| [PackageBundle.cs](../Runtime/ResourcePackage/PackageBundle.cs) | Bundle 描述 |
-| [PackageAsset.cs](../Runtime/ResourcePackage/PackageAsset.cs) | 资源描述 |
-| [BundleInfo.cs](../Runtime/ResourcePackage/BundleInfo.cs) | Bundle 运行时包装 |
-| [AssetInfo.cs](../Runtime/ResourcePackage/AssetInfo.cs) | 资源信息（含 LoadMethod） |
+| [EPlayMode.cs](../Assets/YooAsset/Runtime/ResourcePackage/EPlayMode.cs) | PlayMode 枚举 |
+| [EBundleType.cs](../Assets/YooAsset/Runtime/BundleHandle/EBundleType.cs) | BundleType 枚举（含 12/13/14 虚拟类型） |
+| [IBundleHandle.cs](../Assets/YooAsset/Runtime/BundleHandle/Interfaces/IBundleHandle.cs) | BundleHandle 统一接口 |
+| [IFileSystem.cs](../Assets/YooAsset/Runtime/FileSystem/Interfaces/IFileSystem.cs) | 文件系统统一接口 |
+| [IBundleCache.cs](../Assets/YooAsset/Runtime/BundleCache/Interfaces/IBundleCache.cs) | 缓存系统统一接口 |
+| [PackageManifest.cs](../Assets/YooAsset/Runtime/ResourcePackage/PackageManifest.cs) | 资源清单 |
+| [PackageBundle.cs](../Assets/YooAsset/Runtime/ResourcePackage/PackageBundle.cs) | Bundle 描述 |
+| [PackageAsset.cs](../Assets/YooAsset/Runtime/ResourcePackage/PackageAsset.cs) | 资源描述 |
+| [BundleInfo.cs](../Assets/YooAsset/Runtime/ResourcePackage/BundleInfo.cs) | Bundle 运行时包装 |
+| [AssetInfo.cs](../Assets/YooAsset/Runtime/ResourcePackage/AssetInfo.cs) | 资源信息（含 LoadMethod） |
