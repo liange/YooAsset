@@ -85,18 +85,29 @@ var operation = package.LoadPackageManifestAsync(
 await operation;
 ```
 
-内部流程：
-1. 下载 `{PackageName}_{PackageVersion}.hash` — 清单的哈希校验文件
-2. 下载 `{PackageName}_{PackageVersion}.bytes` — 清单二进制文件
-3. 用 hash 文件内容校验 bytes 文件完整性（支持 MD5/CRC32）
-4. 反序列化生成 `PackageManifest` 对象
-5. 调用 `FileSystemHost.SetActiveManifest(manifest)` **激活新清单** — 后续所有加载和下载都基于此清单
+内部流程（顶层入口 `LoadPackageManifestOperation`，沙盒文件系统实际执行类 `SFSLoadPackageManifestOperation` 状态机 4 阶段）：
 
-相关源码：
-- [LoadPackageManifestOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/LoadPackageManifestOperation.cs)
-- [SFSLoadPackageManifestOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSLoadPackageManifestOperation.cs)
-- [LoadCachePackageManifestOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/LoadCachePackageManifestOperation.cs)
-- [PackageManifestHelper.cs](../Assets/YooAsset/Runtime/ResourcePackage/PackageManifestHelper.cs) — `VerifyManifestData()` 校验方法
+1. **下载 hash 文件** —— `DownloadPackageHashOperation` 下载 `{PackageName}_{PackageVersion}.hash`
+   - 触发分支：[SFSLoadPackageManifestOperation.cs:45](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSLoadPackageManifestOperation.cs#L45) `ESteps.DownloadPackageHash`
+   - 执行：[DownloadPackageHashOperation.cs:58-94](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/DownloadPackageHashOperation.cs#L58-L94) `InternalUpdate()` 的 `DownloadFile` 分支
+   - 文件名由 [YooAssetConfiguration.GetPackageHashFileName()](../Assets/YooAsset/Runtime/Settings/YooAssetConfiguration.cs) 生成；下载到临时文件 → 文本校验 → 原子 Move 到缓存路径
+
+2. **下载清单二进制文件** —— `DownloadPackageManifestOperation` 下载 `{PackageName}_{PackageVersion}.bytes`
+   - 触发分支：[SFSLoadPackageManifestOperation.cs:69](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSLoadPackageManifestOperation.cs#L69) `ESteps.DownloadPackageManifest`
+   - 执行：[DownloadPackageManifestOperation.cs](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/DownloadPackageManifestOperation.cs)（流程与 hash 下载相同）
+
+3. **读取本地 hash 值** —— `LoadCachePackageHashOperation`（从刚下载的 .hash 文件读出字符串）
+   - 触发分支：[SFSLoadPackageManifestOperation.cs:93](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSLoadPackageManifestOperation.cs#L93) `ESteps.LoadPackageHash`
+   - 执行：[LoadCachePackageHashOperation.cs:41-62](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/LoadCachePackageHashOperation.cs#L41) `InternalUpdate()`，结果暴露为 `PackageHash` 属性，下一步使用
+
+4. **校验 bytes 完整性 + 反序列化** —— `LoadCachePackageManifestOperation` 内部再分 3 步：`LoadFileData → VerifyFileData → LoadManifest`
+   - 触发分支：[SFSLoadPackageManifestOperation.cs:118](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/SFSLoadPackageManifestOperation.cs#L118) `ESteps.LoadPackageManifest`
+   - 校验：[LoadCachePackageManifestOperation.cs:72](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/LoadCachePackageManifestOperation.cs#L72) 调用 `PackageManifestHelper.VerifyManifestData()`
+     实现见 [PackageManifestHelper.cs:25-40](../Assets/YooAsset/Runtime/ResourcePackage/PackageManifestHelper.cs#L25)：哈希字符串长度 == 32 走 `HashUtility.ComputeMD5`，否则走 `HashUtility.ComputeCrc32`
+   - 反序列化：[LoadCachePackageManifestOperation.cs:83-101](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/Operations/Internal/LoadCachePackageManifestOperation.cs#L83) 创建并驱动 `DeserializeManifestOperation`（依次解析 FileHeader / AssetList / BundleList，初始化 `PackageManifest`）
+
+5. **激活新清单** —— 由顶层 `LoadPackageManifestOperation` 在子操作 `Succeeded` 后调用，后续所有 `LoadAssetAsync` / `CreateResourceDownloader` 都基于此 `ActiveManifest`
+   - 调用点：[LoadPackageManifestOperation.cs:90](../Assets/YooAsset/Runtime/ResourcePackage/Operations/LoadPackageManifestOperation.cs#L90) → [FileSystemHost.SetActiveManifest()](../Assets/YooAsset/Runtime/ResourcePackage/FileSystemHost.cs#L103)（仅 `ActiveManifest = manifest`）
 
 ### 第 4 步：创建下载器
 
