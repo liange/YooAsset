@@ -130,16 +130,175 @@ else
 }
 ```
 
-内部流程（`FileSystemHost.CreateResourceDownloader()`）：
-1. 遍历激活清单中的所有 `PackageBundle`
-2. 对每个 bundle 调用 `fileSystem.IsDownloadRequired(bundle)` 进行判定
-3. 将需要下载的 bundle 打包成 `ResourceDownloaderOperation`
-4. 统计 `TotalDownloadCount`（总文件数）和 `TotalDownloadBytes`（总字节数）
+`CreateResourceDownloader` 有三种重载，用户日常使用前两种：
+
+| 重载 | Options 类型 | 用途 |
+|------|-------------|------|
+| `CreateResourceDownloader(ResourceDownloaderOptions)` | Tags 过滤 | 按资源标签分组下载 |
+| `CreateResourceDownloader(BundleDownloaderOptions)` | AssetInfo 过滤 | 按指定资源精确下载 |
+| `CreateResourceDownloader(ResourceUnpackerOptions)` | Tags 过滤 | 解压内置 bundle（详见第 6 步） |
+
+#### 4.1 入口：遍历清单（三种筛选模式）
+
+核心入口 [FileSystemHost.cs:272-298](../Assets/YooAsset/Runtime/ResourcePackage/FileSystemHost.cs#L272)：
+
+```csharp
+public ResourceDownloaderOperation CreateResourceDownloader(ResourceDownloaderOptions options)
+{
+    List<BundleInfo> downloadList;
+    if (options.Tags == null)
+        downloadList = GetAllBundleInfos(manifest, IsDownloadRequired);  // 模式 A：全量
+    else
+        downloadList = GetBundleInfosByTags(manifest, options.Tags, IsDownloadRequired); // 模式 B：按标签
+    return new ResourceDownloaderOperation(PackageName, downloadList, ...);
+}
+```
+
+`BundlePredicate` 是一个委托 `Func<IFileSystem, PackageBundle, bool>`，三种操作分别传入不同谓词：
+
+| 操作 | 谓词 | 谓词实现 |
+|------|------|---------|
+| 创建下载器 | `IsDownloadRequired` | `fileSystem.IsDownloadRequired(bundle)` |
+| 创建解压器 | `IsUnpackRequired` | `fileSystem.IsUnpackRequired(bundle)` |
+| 创建导入器 | `IsImportRequired` | `fileSystem.IsImportRequired(bundle)` |
+
+**三种筛选模式的实现细节：**
+
+1. **全量筛选（`GetAllBundleInfos`）** — [FileSystemHost.cs:389-413](../Assets/YooAsset/Runtime/ResourcePackage/FileSystemHost.cs#L389)
+   - 遍历 `manifest.BundleList` 中的全部 bundle
+   - 跳过无法找到归属文件系统的 bundle（`GetOwnerFileSystem` 返回 null）
+
+2. **按标签筛选（`GetBundleInfosByTags`）** — [FileSystemHost.cs:414-445](../Assets/YooAsset/Runtime/ResourcePackage/FileSystemHost.cs#L414)
+   - 额外规则：**未标记的资源包视为公共依赖，始终包含在下载列表中**
+   - 已标记的 bundle 只有 `HasAnyTag(tags)` 为 true 时才纳入
+
+3. **按资源筛选（`GetBundleInfosByAssetInfos`）** — [FileSystemHost.cs:446-520](../Assets/YooAsset/Runtime/ResourcePackage/FileSystemHost.cs#L446)
+   - 从 `AssetInfo[]` 出发，通过 `manifest.GetMainPackageBundle()` 找到主 bundle
+   - 再通过 `manifest.GetAllAssetDependencies()` 找到所有依赖 bundle
+   - 使用 `HashSet<string>`（按 `BundleGuid`）去重
+
+#### 4.2 核心判定：双文件系统协同筛选
+
+HostPlayMode 注册了两个文件系统（顺序由 `InitializePackageAsync` 确定，`BuiltinFileSystem` 在列表前，`SandboxFileSystem` 在列表后）：
+
+```
+FileSystemHost._fileSystems[0] = BuiltinFileSystem
+FileSystemHost._fileSystems[1] = SandboxFileSystem  ← 主文件系统（保底）
+```
+
+##### 4.2.1 归属判定：`GetOwnerFileSystem(bundle)`
+
+[FileSystemHost.cs:126-139](../Assets/YooAsset/Runtime/ResourcePackage/FileSystemHost.cs#L126)
+
+```csharp
+private IFileSystem GetOwnerFileSystem(PackageBundle packageBundle)
+{
+    for (int i = 0; i < _fileSystems.Count; i++)
+    {
+        if (_fileSystems[i].CanAcceptBundle(packageBundle))
+            return _fileSystems[i];  // 第一个匹配的文件系统接管
+    }
+    return null;
+}
+```
+
+`CanAcceptBundle` 实现对比：
+
+| 文件系统 | `CanAcceptBundle` | 逻辑 |
+|---------|-------------------|------|
+| `BuiltinFileSystem` | `BuiltinBundleCache.IsCached(bundle.BundleGuid)` | 检查 bundle GUID 是否在 StreamingAssets 内置清单中存在 |
+| `SandboxFileSystem` | `return true;` | 保底接管，所有未被 BuiltinFileSystem 接管的 bundle 都归它处理 |
+
+**判定结果**（以 HostPlayMode 为例）：
+- 首次安装（纯内置包）→ bundle 在 StreamingAssets 中存在 → `BuiltinFileSystem` 接管 → 不下载（`IsDownloadRequired` 固定返回 false）
+- 版本升级（新 bundle 仅在远端清单中）→ StreamingAssets 中无此 GUID → `BuiltinFileSystem.CanAcceptBundle` 返回 false → **`SandboxFileSystem` 接管** → 由 `SandboxFileSystem.IsDownloadRequired` 继续判定
+
+##### 4.2.2 下载判定：`IsDownloadRequired(bundle)`
+
+对比各个文件系统的 `IsDownloadRequired` 实现：
+
+| 文件系统 | `IsDownloadRequired` | 逻辑 |
+|---------|---------------------|------|
+| `BuiltinFileSystem` | `return false;` | 内置 bundle 永不下载（仅可能解压） |
+| `SandboxFileSystem` | `BundleCache.IsCached(bundle.BundleGuid) == false` | 本地沙盒缓存中不存在 → 需要下载 |
+| `EditorFileSystem` | `BundleCache.IsCached(bundle.BundleGuid) == false` | 编辑器模拟模式同上 |
+
+##### 4.2.3 缓存判定：`SandboxBundleCache.IsCached(bundleGuid)`
+
+[SandboxBundleCache.cs:153-156](../Assets/YooAsset/Runtime/BundleCache/Services/SandboxBundleCache/SandboxBundleCache.cs#L153)
+
+```csharp
+public bool IsCached(string bundleGuid)
+{
+    return _cacheEntries.ContainsKey(bundleGuid);
+}
+```
+
+`_cacheEntries` 是一个 `Dictionary<string, SandboxBundleCacheEntry>`，在 `SBCInitializeOperation` 中通过两步填充：
+
+1. **扫描缓存文件（`SearchCacheFiles`）** — 遍历沙盒缓存目录 `{PersistentDataPath}/Sandbox/{PackageName}/`，根据目录结构（`{HashHead(2)}/{BundleGuid}/__data`）搜索所有已下载的 bundle，创建 `SandboxBundleCacheEntry` 并加入 `_cacheEntries`
+2. **校验缓存文件（`VerifyCacheFiles`）** — 根据 `EFileVerifyLevel` 对已入缓存的 bundle 进行完整性校验，校验失败则从 `_cacheEntries` 中移除
+
+缓存目录结构：
+```
+{PersistentDataPath}/Sandbox/{PackageName}/
+├── a1/
+│   ├── {BundleGuid}/
+│   │   ├── __data          ← 实际资源文件
+│   │   └── __info          ← 缓存信息文件（36 字节，Magic="YOC1"）
+│   └── {BundleGuid}/
+│       └── ...
+├── b2/
+│   └── ...
+└── ...
+```
+
+其中 `${HashHead(2)}` 取自 `PackageBundle.FileHash` 的前 2 个字符（[SandboxBundleCache.cs:300-308](../Assets/YooAsset/Runtime/BundleCache/Services/SandboxBundleCache/SandboxBundleCache.cs#L300)），用于在文件系统层面分散文件分布，避免单目录文件过多。
+
+#### 4.3 完整判定流程图
+
+```
+CreateResourceDownloader()
+  │
+  ├─ 取 ActiveManifest（第 3 步激活的清单）
+  │
+  ├─ 遍历 manifest.BundleList（全量模式）/ 按 Tags/AssetInfos 筛选
+  │    │
+  │    └─ 对每个 PackageBundle：
+  │         │
+  │         ├─ GetOwnerFileSystem(bundle)
+  │         │    │
+  │         │    ├─ 遍历 _fileSystems[i]
+  │         │    │    │
+  │         │    │    ├─ BuiltinFileSystem.CanAcceptBundle(bundle)
+  │         │    │    │    └─ BuiltinBundleCache.IsCached(bundle.BundleGuid)
+  │         │    │    │         ├─ YES → 接管（内置 bundle）→ IsDownloadRequired = false → 不下载
+  │         │    │    │         └─ NO  → 继续下一个文件系统
+  │         │    │    │
+  │         │    │    └─ SandboxFileSystem.CanAcceptBundle(bundle) → 总是 true（保底）
+  │         │    │         └─ 接管 → IsDownloadRequired = !BundleCache.IsCached(GUID)
+  │         │    │              ├─ GUID 在 _cacheEntries 中存在 → 已缓存 → 不需要下载
+  │         │    │              └─ GUID 不存在 → 需要下载 ✓
+  │         │    │
+  │         │    └─ 无文件系统接管 → 跳过（YooLogger.Error）
+  │         │
+  │         └─ 命中 (IsDownloadRequired == true) → new BundleInfo(fileSystem, bundle) → 加入 downloadList
+  │
+  └─ new ResourceDownloaderOperation(PackageName, downloadList, ...)
+       │
+       ├─ CalculateStatistics() → TotalDownloadCount / TotalDownloadBytes
+       └─ StartDownload() → 进入第 5 步
+```
 
 相关源码：
-- [FileSystemHost.cs](../Assets/YooAsset/Runtime/ResourcePackage/FileSystemHost.cs) — `CreateResourceDownloader()` 方法
-- [DownloaderOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/DownloaderOperation.cs) — `ResourceDownloaderOperation` 类
-- [BundleInfo.cs](../Assets/YooAsset/Runtime/ResourcePackage/BundleInfo.cs) — `IsDownloadRequired()` 方法
+- [FileSystemHost.cs](../Assets/YooAsset/Runtime/ResourcePackage/FileSystemHost.cs) — `CreateResourceDownloader()`、`GetOwnerFileSystem()`、`GetAllBundleInfos()`、`GetBundleInfosByTags()`、`GetBundleInfosByAssetInfos()`
+- [DownloaderOperation.cs](../Assets/YooAsset/Runtime/ResourcePackage/Operations/DownloaderOperation.cs) — `ResourceDownloaderOperation` / `ResourceUnpackerOperation` / `ResourceImporterOperation`
+- [BundleInfo.cs](../Assets/YooAsset/Runtime/ResourcePackage/BundleInfo.cs) — `IsDownloadRequired()`、`IsUnpackRequired()`、`IsImportRequired()`
+- [SandboxFileSystem.cs:375-378](../Assets/YooAsset/Runtime/FileSystem/Services/SandboxFileSystem/SandboxFileSystem.cs#L375) — `IsDownloadRequired()` 实现
+- [BuiltinFileSystem.cs:367-374](../Assets/YooAsset/Runtime/FileSystem/Services/BuiltinFileSystem/BuiltinFileSystem.cs#L367) — `CanAcceptBundle()` 和 `IsDownloadRequired()` 实现
+- [SandboxBundleCache.cs](../Assets/YooAsset/Runtime/BundleCache/Services/SandboxBundleCache/SandboxBundleCache.cs) — `IsCached()`、`_cacheEntries` 初始化
+- [SBCInitializeOperation.cs](../Assets/YooAsset/Runtime/BundleCache/Services/SandboxBundleCache/Operations/SBCInitializeOperation.cs) — 缓存初始化（SearchCacheFiles → VerifyCacheFiles）
+- [IFileSystem.cs](../Assets/YooAsset/Runtime/FileSystem/Interfaces/IFileSystem.cs) — `CanAcceptBundle()` 和 `IsDownloadRequired()` 接口定义
 
 ### 第 5 步：执行下载
 

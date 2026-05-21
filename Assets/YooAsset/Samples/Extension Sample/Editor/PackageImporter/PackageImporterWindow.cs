@@ -120,6 +120,7 @@ namespace YooAsset.Editor
                 string sourcePath = Path.Combine(sourceRoot, fileName);
                 string destPath = Path.Combine(destRoot, fileName);
                 EditorFileUtility.CopyFile(sourcePath, destPath, true);
+                Debug.LogFormat("src:{0}, dst:{1}", sourcePath, destPath);
             }
 
             Debug.Log($"Patch package copy completed. Copied {fileCount} bundle files.");
